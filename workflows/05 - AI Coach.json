@@ -1,0 +1,300 @@
+{
+  "name": "05 - AI Coach",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "id": "56bcc7b4-9508-4fd5-a160-316b02f9f3d1",
+      "name": "When chat message received",
+      "webhookId": "686c025c-e1b3-49e3-b774-e55a58dc6d92"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1QZ9Gq3IzacRkYjfoVbb0mYMTolVZleINpKtfqg31Nl4",
+          "mode": "list",
+          "cachedResultName": "MyLife_AI_Database",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1QZ9Gq3IzacRkYjfoVbb0mYMTolVZleINpKtfqg31Nl4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 2010772922,
+          "mode": "list",
+          "cachedResultName": "Journal",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1QZ9Gq3IzacRkYjfoVbb0mYMTolVZleINpKtfqg31Nl4/edit#gid=2010772922"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        608,
+        16
+      ],
+      "id": "7aa1528a-34d5-4ccf-9410-6cc5420a1139",
+      "name": "Read Journal",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "nWxUfmGEC7k55S7m",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1QZ9Gq3IzacRkYjfoVbb0mYMTolVZleINpKtfqg31Nl4",
+          "mode": "list",
+          "cachedResultName": "MyLife_AI_Database",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1QZ9Gq3IzacRkYjfoVbb0mYMTolVZleINpKtfqg31Nl4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 154195189,
+          "mode": "list",
+          "cachedResultName": "Tasks",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1QZ9Gq3IzacRkYjfoVbb0mYMTolVZleINpKtfqg31Nl4/edit#gid=154195189"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        400,
+        16
+      ],
+      "id": "c8651061-6c84-42ee-b31d-f284a9b328f3",
+      "name": "Read Tasks",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "nWxUfmGEC7k55S7m",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1QZ9Gq3IzacRkYjfoVbb0mYMTolVZleINpKtfqg31Nl4",
+          "mode": "list",
+          "cachedResultName": "MyLife_AI_Database",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1QZ9Gq3IzacRkYjfoVbb0mYMTolVZleINpKtfqg31Nl4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 807662676,
+          "mode": "list",
+          "cachedResultName": "Goals",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1QZ9Gq3IzacRkYjfoVbb0mYMTolVZleINpKtfqg31Nl4/edit#gid=807662676"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        192,
+        16
+      ],
+      "id": "333778a5-9e2d-4b34-8a7f-b4f3f6dd30b4",
+      "name": "Read Goals",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "nWxUfmGEC7k55S7m",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        816,
+        16
+      ],
+      "id": "91fce2dc-1294-4992-b458-0b9150aa6b0a",
+      "name": "Aggregate"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are the AI Coach for MyLife AI.\n\nYou are NOT a chatbot.\n\nYou are an expert Productivity Coach, Life Coach and Career Mentor.\n\nYour job is to analyze the user's current progress and provide actionable coaching.\n\n----------------------------------\n\nUSER DATA\n\n{{ JSON.stringify($data, null, 2) }}\n\n----------------------------------\n\nUSER QUESTION\n\n{{$json.chatInput}}\n\n----------------------------------\n\nYOUR RESPONSIBILITIES\n\nAnalyze:\n\n• Goals\n• Tasks\n• Journal\n\nThen provide:\n\n1. Overall Progress\n2. Biggest Achievement\n3. Biggest Blocker\n4. Top 3 Priorities\n5. Motivation\n6. Productivity Tip\n7. Suggested Next Action\n\nBase your advice ONLY on the provided data.\n\nDo NOT invent information.\n\nKeep responses concise.\n\nReturn ONLY valid JSON.",
+        "hasOutputParser": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1024,
+        16
+      ],
+      "id": "ae299e14-aae6-4776-b357-5baad5fa3ec9",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        1008,
+        160
+      ],
+      "id": "e436f76d-2723-44ce-a2db-3c064864795c",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "3AjCA83VnApO9CD3",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"coach\": {\n    \"overall_progress\": \"\",\n    \"biggest_achievement\": \"\",\n    \"biggest_blocker\": \"\",\n    \"top_priorities\": [\n      \"\",\n      \"\",\n      \"\"\n    ],\n    \"motivation\": \"\",\n    \"productivity_tip\": \"\",\n    \"next_action\": \"\"\n  }\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1200,
+        176
+      ],
+      "id": "fd0dfa28-85fa-48db-9ec1-8a47e3f3c7e9",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "message": "=📊 Progress:\n{{ $json.output.coach.overall_progress }}\n\n🏆 Achievement:\n{{ $json.output.coach.biggest_achievement }}\n\n🚧 Biggest Blocker:\n{{ $json.output.coach.biggest_blocker }}\n\n🎯 Top Priorities:\n1. {{ $json.output.coach.top_priorities[0] }}\n2. {{ $json.output.coach.top_priorities[1] }}\n3. {{ $json.output.coach.top_priorities[2] }}\n\n💡 Tip:\n{{ $json.output.coach.productivity_tip }}\n\n➡️ Next Action:\n{{ $json.output.coach.next_action }}\n\n🔥 Motivation:\n{{ $json.output.coach.motivation }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chat",
+      "typeVersion": 1.3,
+      "position": [
+        1376,
+        16
+      ],
+      "id": "0f934156-8d3d-4a7b-8de8-a506ca6fc57f",
+      "name": "Chat",
+      "webhookId": "47082463-d1b1-44be-95c2-ab22ef484bc9"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "Read Goals",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Tasks": {
+      "main": [
+        [
+          {
+            "node": "Read Journal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Goals": {
+      "main": [
+        [
+          {
+            "node": "Read Tasks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Journal": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Chat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "b43c6707-48f0-4ee0-8933-33197e41cbf9",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "3a6605d1cc56d5d41a925fdcbeb9d3b1ea1c8516675e0b6a7eb4b3347159fd59"
+  },
+  "nodeGroups": [],
+  "id": "gLHMaXUruQqJKvud",
+  "tags": []
+}

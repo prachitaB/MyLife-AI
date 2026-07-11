@@ -1,0 +1,574 @@
+{
+  "name": "01 - Goal Planner Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "id": "117968c2-2ba9-44cc-9790-cfb31e96d110",
+      "name": "When chat message received",
+      "webhookId": "c1d13ad1-d8d7-48a6-959e-2b1a2327d354"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1QZ9Gq3IzacRkYjfoVbb0mYMTolVZleINpKtfqg31Nl4",
+          "mode": "list",
+          "cachedResultName": "MyLife_AI_Database",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1QZ9Gq3IzacRkYjfoVbb0mYMTolVZleINpKtfqg31Nl4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 856870059,
+          "mode": "list",
+          "cachedResultName": "User",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1QZ9Gq3IzacRkYjfoVbb0mYMTolVZleINpKtfqg31Nl4/edit#gid=856870059"
+        },
+        "filtersUI": {
+          "values": []
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        208,
+        0
+      ],
+      "id": "61ae3296-d81c-4222-a394-c8f9df07ac53",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "nWxUfmGEC7k55S7m",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "You are the Goal Planning Agent for MyLife AI.\n\nMyLife AI is a Human-in-Control AI Personal Life Operating System.\n\nYour responsibility is to convert a user's life goal into a structured roadmap suitable for storing in the MyLife AI Database.\n\nYou are NOT a chatbot.\n\nYou are an expert Life Strategist, Career Mentor, Productivity Coach, and Project Planner.\n\nYou think step by step before producing the final answer.\n\n--------------------------------------------------\n\nCURRENT TIMESTAMP\n\n{{ $now }}\n\n--------------------------------------------------\n\nUSER PROFILE\n\n{{ JSON.stringify($data, null, 2) }}\n\n--------------------------------------------------\n\nUSER REQUEST\n\n{{ $json.chatInput }}\n\n--------------------------------------------------\n\nYOUR RESPONSIBILITIES\n\n1. Understand the user's goal.\n\n2. Infer missing information when necessary.\n\n3. Generate ONE Goal object.\n\n4. Generate between 3 and 8 logical milestones.\n\n5. Milestones must be sequential.\n\n6. Milestones should have realistic dates.\n\n7. Do NOT generate daily tasks.\n\n8. Do NOT ask follow-up questions.\n\n9. If category is not provided, intelligently infer one from:\n\nCareer\nLearning\nFitness\nFinance\nPersonal\nProductivity\n\n10. If priority is missing,\ndefault to Medium.\n\n11. If target date is missing,\nestimate a realistic duration.\n\n--------------------------------------------------\n\nGOAL OBJECT\n\nThe Goal object MUST contain EXACTLY these fields.\n\ngoal_id\n\nuser_id\n\ngoal_name\n\ncategory\n\ndescription\n\ntarget_date\n\npriority\n\nstatus\n\nprogress_percentage\n\nestimated_duration\n\ncreated_at\n\nupdated_at\n\n--------------------------------------------------\n\nMILESTONE OBJECT\n\nEach milestone MUST contain EXACTLY these fields.\n\nmilestone_id\n\ngoal_id\n\nmilestone_name\n\ndescription\n\nsequence\n\nstart_date\n\nend_date\n\nstatus\n\npriority\n\nprogress\n\ncreated_at\n\nupdated_at\n\n--------------------------------------------------\n\nRULES\n\nStatus must always be\n\n\"Not Started\"\n\nProgress must always be\n\n0\n\nGenerate concise milestone names.\n\nGenerate realistic milestone descriptions.\n\nReturn ONLY valid JSON.\n\nDo NOT return markdown.\n\nDo NOT explain anything.\n\nDo NOT wrap JSON in code blocks.\n\n--------------------------------------------------\n\nReturn JSON in EXACTLY this format.\n\n{\n  \"goal\": {\n    \"goal_id\": \"\",\n    \"user_id\": \"\",\n    \"goal_name\": \"\",\n    \"category\": \"\",\n    \"description\": \"\",\n    \"target_date\": \"\",\n    \"priority\": \"\",\n    \"status\": \"Not Started\",\n    \"progress_percentage\": 0,\n    \"estimated_duration\": \"\",\n    \"created_at\": \"\",\n    \"updated_at\": \"\"\n  },\n  \"milestones\": [\n    {\n      \"milestone_id\": \"\",\n      \"goal_id\": \"\",\n      \"milestone_name\": \"\",\n      \"description\": \"\",\n      \"sequence\": 1,\n      \"start_date\": \"\",\n      \"end_date\": \"\",\n      \"status\": \"Not Started\",\n      \"priority\": \"\",\n      \"progress\": 0,\n      \"created_at\": \"\",\n      \"updated_at\": \"\"\n    }\n  ]\n}",
+        "hasOutputParser": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        896,
+        0
+      ],
+      "id": "65243ef3-debe-48a3-8f1a-e611e76024eb",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-5-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        896,
+        176
+      ],
+      "id": "1ec3f025-6947-4564-80d4-39f572c76e6e",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "xRuIaqHYhtuTAY3n",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fieldsToAggregate": {
+          "fieldToAggregate": [
+            {}
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        432,
+        0
+      ],
+      "id": "ffa3d77c-5b4b-42ba-bbd2-ac489a39eef7",
+      "name": "Aggregate"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"goal\": {\n    \"goal_id\": \"\",\n    \"user_id\": \"\",\n    \"goal_name\": \"\",\n    \"category\": \"\",\n    \"description\": \"\",\n    \"target_date\": \"\",\n    \"priority\": \"\",\n    \"status\": \"Not Started\",\n    \"progress_percentage\": 0,\n    \"estimated_duration\": \"\",\n    \"created_at\": \"\",\n    \"updated_at\": \"\"\n  },\n  \"milestones\": [\n    {\n      \"milestone_id\": \"\",\n      \"goal_id\": \"\",\n      \"milestone_name\": \"\",\n      \"description\": \"\",\n      \"sequence\": 1,\n      \"start_date\": \"\",\n      \"end_date\": \"\",\n      \"status\": \"Not Started\",\n      \"priority\": \"\",\n      \"progress\": 0,\n      \"created_at\": \"\",\n      \"updated_at\": \"\"\n    }\n  ]\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1040,
+        176
+      ],
+      "id": "03a5862f-ed02-4335-a3b4-3fd136851614",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1QZ9Gq3IzacRkYjfoVbb0mYMTolVZleINpKtfqg31Nl4",
+          "mode": "list",
+          "cachedResultName": "MyLife_AI_Database",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1QZ9Gq3IzacRkYjfoVbb0mYMTolVZleINpKtfqg31Nl4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 807662676,
+          "mode": "list",
+          "cachedResultName": "Goals",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1QZ9Gq3IzacRkYjfoVbb0mYMTolVZleINpKtfqg31Nl4/edit#gid=807662676"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "goal_id": "={{ $json.output.goal.goal_id }}",
+            "user_id": "={{ $json.output.goal.user_id }}",
+            "goal_name": "={{ $json.output.goal.goal_name }}",
+            "category": "={{ $json.output.goal.category }}",
+            "description": "={{ $json.output.goal.description }}",
+            "target_date": "={{ $json.output.goal.target_date }}",
+            "priority": "={{ $json.output.goal.priority }}",
+            "status": "={{ $json.output.goal.status }}",
+            "progress_percentage": "={{ $json.output.goal.progress_percentage }}",
+            "estimated_duration": "={{ $json.output.goal.estimated_duration }}",
+            "created_at": "={{ $json.output.goal.created_at }}",
+            "updated_at": "={{ $json.output.goal.updated_at }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "goal_id",
+              "displayName": "goal_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "user_id",
+              "displayName": "user_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "goal_name",
+              "displayName": "goal_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "category",
+              "displayName": "category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "description",
+              "displayName": "description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "target_date",
+              "displayName": "target_date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "priority",
+              "displayName": "priority",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "progress_percentage",
+              "displayName": "progress_percentage",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "estimated_duration",
+              "displayName": "estimated_duration",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "updated_at",
+              "displayName": "updated_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1296,
+        0
+      ],
+      "id": "e1d2afd1-a200-4312-b031-1b835917e06f",
+      "name": "Append Goal",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "nWxUfmGEC7k55S7m",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "output.milestones",
+        "include": "=noOtherFields",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        1296,
+        176
+      ],
+      "id": "953fd592-5414-49eb-8ed5-eedaeb306c60",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1QZ9Gq3IzacRkYjfoVbb0mYMTolVZleINpKtfqg31Nl4",
+          "mode": "list",
+          "cachedResultName": "MyLife_AI_Database",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1QZ9Gq3IzacRkYjfoVbb0mYMTolVZleINpKtfqg31Nl4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1482108085,
+          "mode": "list",
+          "cachedResultName": "Milestones",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1QZ9Gq3IzacRkYjfoVbb0mYMTolVZleINpKtfqg31Nl4/edit#gid=1482108085"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "goal_id": "={{ $json.goal_id }}",
+            "milestone_id": "={{ $json.milestone_id }}",
+            "milestone_name": "={{ $json.milestone_name }}",
+            "description": "={{ $json.description }}",
+            "sequence": "={{ $json.sequence }}",
+            "start_date": "={{ $json.start_date }}",
+            "end_date": "={{ $json.end_date }}",
+            "status": "={{ $json.status }}",
+            "priority": "={{ $json.priority }}",
+            "progress": "={{ $json.progress }}",
+            "created_at": "={{ $json.created_at }}",
+            "updated_at": "={{ $json.updated_at }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "milestone_id",
+              "displayName": "milestone_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "goal_id",
+              "displayName": "goal_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "milestone_name",
+              "displayName": "milestone_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "description",
+              "displayName": "description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "sequence",
+              "displayName": "sequence",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "start_date",
+              "displayName": "start_date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "end_date",
+              "displayName": "end_date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "priority",
+              "displayName": "priority",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "progress",
+              "displayName": "progress",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "updated_at",
+              "displayName": "updated_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1552,
+        176
+      ],
+      "id": "9011817b-4126-4c56-8d1d-bb9e933db488",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "nWxUfmGEC7k55S7m",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Append Goal",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append Goal": {
+      "main": [
+        []
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "bc7682f6-1746-4c5c-a3fa-f9c0b34ff490",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "3a6605d1cc56d5d41a925fdcbeb9d3b1ea1c8516675e0b6a7eb4b3347159fd59"
+  },
+  "nodeGroups": [],
+  "id": "HxBoelb8eCWBLaZX",
+  "tags": []
+}
