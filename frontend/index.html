@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MyLife AI — Your Life, Orchestrated</title>
+
+<!-- Tailwind CDN -->
+<script src="https://cdn.tailwindcss.com"></script>
+
+<!-- Google Fonts: Space Grotesk (display) + Inter (body) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: {
+          display: ['"Space Grotesk"', 'sans-serif'],
+          body: ['"Inter"', 'sans-serif'],
+        },
+        colors: {
+          ink: '#0B0F1A',
+          violet: '#7C5CFF',
+          teal: '#34D9C5',
+          coral: '#FF6FA5',
+        },
+      },
+    },
+  }
+</script>
+
+<style>
+  * { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.2) transparent; }
+  body {
+    background: #0B0F1A;
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ---- Aurora background: the signature ambient element ---- */
+  .aurora {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  .aurora span {
+    position: absolute;
+    border-radius: 9999px;
+    filter: blur(90px);
+    opacity: 0.45;
+    animation: drift 22s ease-in-out infinite;
+  }
+  .aurora span:nth-child(1) {
+    width: 38vw; height: 38vw; top: -10%; left: -8%;
+    background: #7C5CFF;
+    animation-delay: 0s;
+  }
+  .aurora span:nth-child(2) {
+    width: 32vw; height: 32vw; bottom: -12%; right: -6%;
+    background: #34D9C5;
+    animation-delay: -7s;
+  }
+  .aurora span:nth-child(3) {
+    width: 26vw; height: 26vw; top: 35%; left: 40%;
+    background: #FF6FA5;
+    animation-delay: -14s;
+  }
+  @keyframes drift {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33% { transform: translate(4%, 6%) scale(1.08); }
+    66% { transform: translate(-5%, -4%) scale(0.95); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .aurora span { animation: none; }
+  }
+
+  /* ---- Glassmorphism core ---- */
+  .glass {
+    background: rgba(255, 255, 255, 0.055);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+  }
+  .glass-strong {
+    background: rgba(255, 255, 255, 0.09);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+  }
+  .glass-input {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+  }
+  .glass-input:focus {
+    outline: none;
+    border-color: rgba(124, 92, 255, 0.6);
+    box-shadow: 0 0 0 3px rgba(124, 92, 255, 0.18);
+  }
+
+  /* Visible keyboard focus for accessibility */
+  a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible {
+    outline: 2px solid #34D9C5;
+    outline-offset: 2px;
+  }
+
+  .nav-item.active {
+    background: rgba(124, 92, 255, 0.18);
+    border: 1px solid rgba(124, 92, 255, 0.35);
+    color: #fff;
+  }
+
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; animation: fadeIn 0.35s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+  .ring-progress {
+    transition: stroke-dashoffset 0.8s ease;
+  }
+
+  ::selection { background: rgba(124, 92, 255, 0.4); }
+</style>
+</head>
+
+<body class="text-slate-100 font-body">
+
+<!-- Ambient aurora background (decorative, sits behind all content) -->
+<div class="aurora" aria-hidden="true">
+  <span></span><span></span><span></span>
+</div>
+
+<div class="relative z-10 flex min-h-screen">
+
+  <!-- ============ SIDEBAR NAVIGATION ============ -->
+  <aside class="hidden md:flex md:flex-col w-64 shrink-0 p-5 gap-6">
+    <div class="glass rounded-2xl p-5 flex flex-col gap-8 h-full">
+      <div class="flex items-center gap-3 px-1">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-violet to-teal flex items-center justify-center font-display font-bold text-ink">M</div>
+        <div>
+          <p class="font-display font-semibold text-lg leading-tight">MyLife AI</p>
+          <p class="text-xs text-slate-400">your life, orchestrated</p>
+        </div>
+      </div>
+
+      <nav class="flex flex-col gap-1" id="sidebar-nav">
+        <!-- data-tab values map to the tab-panel ids below -->
+        <button data-tab="dashboard" class="nav-item active flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:text-white hover:bg-white/5 transition">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
+          Dashboard
+        </button>
+        <button data-tab="goals" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:text-white hover:bg-white/5 transition">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg>
+          Goals
+        </button>
+        <button data-tab="tasks" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:text-white hover:bg-white/5 transition">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+          Tasks
+        </button>
+        <button data-tab="journal" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:text-white hover:bg-white/5 transition">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
+          Journal
+        </button>
+        <button data-tab="coach" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:text-white hover:bg-white/5 transition">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+          AI Coach
+        </button>
+      </nav>
+
+      <div class="mt-auto glass-input rounded-xl p-3 text-xs text-slate-400">
+        <p class="font-medium text-slate-300 mb-1">Connection status</p>
+        <p id="webhook-status" class="flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+          Webhooks not configured
+        </p>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ============ MOBILE TOP NAV ============ -->
+  <div class="md:hidden fixed top-0 inset-x-0 z-20 p-3">
+    <div class="glass rounded-2xl px-3 py-2 flex items-center justify-between gap-2">
+      <div class="flex items-center gap-2">
+        <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-violet to-teal"></div>
+        <span class="font-display font-semibold text-sm">MyLife AI</span>
+      </div>
+      <select id="mobile-nav" class="glass-input rounded-lg text-sm px-2 py-1.5 bg-transparent text-slate-100">
+        <option value="dashboard">Dashboard</option>
+        <option value="goals">Goals</option>
+        <option value="tasks">Tasks</option>
+        <option value="journal">Journal</option>
+        <option value="coach">AI Coach</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- ============ MAIN CONTENT ============ -->
+  <main class="flex-1 p-5 pt-20 md:pt-5 max-w-6xl mx-auto w-full">
+
+    <!-- ================= DASHBOARD ================= -->
+    <section id="tab-dashboard" class="tab-panel active">
+      <header class="mb-6">
+        <h1 class="font-display text-2xl font-semibold">Good to see you.</h1>
+        <p class="text-slate-400 text-sm mt-1">Here's where things stand today.</p>
+      </header>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+        <!-- Life score ring -->
+        <div class="glass rounded-2xl p-5 flex items-center gap-5 md:col-span-1">
+          <svg width="88" height="88" viewBox="0 0 88 88" class="shrink-0">
+            <circle cx="44" cy="44" r="38" stroke="rgba(255,255,255,0.08)" stroke-width="8" fill="none"/>
+            <circle id="life-score-ring" class="ring-progress" cx="44" cy="44" r="38" stroke="url(#ringGrad)" stroke-width="8" fill="none" stroke-linecap="round" stroke-dasharray="238.76" stroke-dashoffset="238.76" transform="rotate(-90 44 44)"/>
+            <defs>
+              <linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#7C5CFF"/>
+                <stop offset="100%" stop-color="#34D9C5"/>
+              </linearGradient>
+            </defs>
+          </svg>
+          <div>
+            <p class="text-3xl font-display font-semibold" id="life-score-value">--</p>
+            <p class="text-xs text-slate-400 mt-1">Life score</p>
+          </div>
+        </div>
+
+        <!-- Quick stats -->
+        <div class="glass rounded-2xl p-5 md:col-span-2 grid grid-cols-3 gap-3">
+          <div>
+            <p class="text-xs text-slate-400">Active goals</p>
+            <p class="text-2xl font-display font-semibold mt-1" id="stat-goals">--</p>
+          </div>
+          <div>
+            <p class="text-xs text-slate-400">Tasks today</p>
+            <p class="text-2xl font-display font-semibold mt-1" id="stat-tasks">--</p>
+          </div>
+          <div>
+            <p class="text-xs text-slate-400">Journal streak</p>
+            <p class="text-2xl font-display font-semibold mt-1" id="stat-streak">--</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="glass rounded-2xl p-5">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="font-display font-medium">Today's briefing</h2>
+          <button id="refresh-dashboard" class="text-xs px-3 py-1.5 rounded-lg glass-input hover:bg-white/10 transition">Refresh</button>
+        </div>
+        <div id="dashboard-briefing" class="text-sm text-slate-300 leading-relaxed">
+          Load your dashboard to see an AI-generated summary of your day here.
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= GOALS ================= -->
+    <section id="tab-goals" class="tab-panel">
+      <header class="mb-6">
+        <h1 class="font-display text-2xl font-semibold">Goals</h1>
+        <p class="text-slate-400 text-sm mt-1">Describe an outcome. The AI planner breaks it into milestones.</p>
+      </header>
+
+      <div class="glass rounded-2xl p-5 mb-5">
+        <label for="goal-input" class="text-sm font-medium text-slate-300">What do you want to achieve?</label>
+        <div class="flex flex-col sm:flex-row gap-3 mt-2">
+          <input id="goal-input" type="text" placeholder="e.g. Run a half marathon by November"
+            class="glass-input flex-1 rounded-xl px-4 py-2.5 text-sm placeholder:text-slate-500" />
+          <button id="plan-goal-btn" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-violet to-teal text-ink font-medium text-sm hover:opacity-90 transition">
+            Plan it
+          </button>
+        </div>
+        <p id="goal-status" class="text-xs text-slate-500 mt-2"></p>
+      </div>
+
+      <div id="goals-list" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <!-- Goal cards are injected here after the webhook responds -->
+        <div class="glass rounded-2xl p-5 border-dashed border-2 border-white/10 flex items-center justify-center text-center text-sm text-slate-500 min-h-[140px]">
+          No goals yet. Add one above to get a milestone plan.
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= TASKS ================= -->
+    <section id="tab-tasks" class="tab-panel">
+      <header class="mb-6">
+        <h1 class="font-display text-2xl font-semibold">Tasks</h1>
+        <p class="text-slate-400 text-sm mt-1">Generate a task list from a goal or a plain description of what's on your mind.</p>
+      </header>
+
+      <div class="glass rounded-2xl p-5 mb-5">
+        <label for="task-context" class="text-sm font-medium text-slate-300">Context for the task generator</label>
+        <textarea id="task-context" rows="2" placeholder="e.g. This week I need to prep for the half marathon and catch up on work"
+          class="glass-input w-full rounded-xl px-4 py-2.5 text-sm mt-2 placeholder:text-slate-500 resize-none"></textarea>
+        <button id="generate-tasks-btn" class="mt-3 px-5 py-2.5 rounded-xl bg-gradient-to-r from-violet to-teal text-ink font-medium text-sm hover:opacity-90 transition">
+          Generate tasks
+        </button>
+        <p id="task-status" class="text-xs text-slate-500 mt-2"></p>
+      </div>
+
+      <ul id="tasks-list" class="space-y-2">
+        <!-- Task rows are injected here after the webhook responds -->
+        <li class="glass rounded-xl p-4 text-sm text-slate-500 text-center border-dashed border-2 border-white/10">
+          No tasks yet. Generate some above.
+        </li>
+      </ul>
+    </section>
+
+    <!-- ================= JOURNAL ================= -->
+    <section id="tab-journal" class="tab-panel">
+      <header class="mb-6">
+        <h1 class="font-display text-2xl font-semibold">Journal</h1>
+        <p class="text-slate-400 text-sm mt-1">Write freely. Entries are sent for reflection and pattern tracking.</p>
+      </header>
+
+      <div class="glass rounded-2xl p-5 mb-5">
+        <textarea id="journal-entry" rows="6" placeholder="What's on your mind today?"
+          class="glass-input w-full rounded-xl px-4 py-3 text-sm placeholder:text-slate-500 resize-none"></textarea>
+        <div class="flex items-center justify-between mt-3">
+          <p class="text-xs text-slate-500" id="journal-status"></p>
+          <button id="save-journal-btn" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-violet to-teal text-ink font-medium text-sm hover:opacity-90 transition">
+            Save entry
+          </button>
+        </div>
+      </div>
+
+      <div id="journal-reflection" class="glass rounded-2xl p-5 text-sm text-slate-300 leading-relaxed hidden">
+        <!-- AI reflection on the journal entry appears here -->
+      </div>
+    </section>
+
+    <!-- ================= AI COACH ================= -->
+    <section id="tab-coach" class="tab-panel">
+      <header class="mb-6">
+        <h1 class="font-display text-2xl font-semibold">AI Coach</h1>
+        <p class="text-slate-400 text-sm mt-1">Ask anything about your goals, tasks, or how you're doing.</p>
+      </header>
+
+      <div class="glass rounded-2xl p-5 flex flex-col h-[60vh]">
+        <div id="coach-messages" class="flex-1 overflow-y-auto space-y-3 pr-1">
+          <div class="glass-strong rounded-2xl rounded-tl-sm px-4 py-3 text-sm max-w-[80%]">
+            Hi — I'm your coach. Ask me anything once the webhook is connected.
+          </div>
+        </div>
+        <div class="flex items-center gap-3 mt-4 pt-4 border-t border-white/10">
+          <input id="coach-input" type="text" placeholder="Type a message..."
+            class="glass-input flex-1 rounded-xl px-4 py-2.5 text-sm placeholder:text-slate-500" />
+          <button id="coach-send-btn" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-violet to-teal text-ink font-medium text-sm hover:opacity-90 transition shrink-0">
+            Send
+          </button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+/* =========================================================================
+   MYLIFE AI — WEBHOOK CONFIGURATION
+   -------------------------------------------------------------------------
+   Paste your n8n production webhook URLs below. Each one corresponds to a
+   single n8n workflow trigger ("Webhook" node, Production URL).
+   Leave a value as an empty string '' to keep that feature in demo mode
+   (it will just log to the console instead of making a network call).
+   ========================================================================= */
+const WEBHOOK_URLS = {
+  dashboard:     '', // Left as placeholder — dashboard stays on mock data for now.
+  goalPlanner:   'https://omkar00.app.n8n.cloud/webhook/goal-planner',
+  taskGenerator: 'https://omkar00.app.n8n.cloud/webhook/task-generator',
+  journal:       'https://omkar00.app.n8n.cloud/webhook/journal',
+  coach:         'https://omkar00.app.n8n.cloud/webhook/coach',
+};
+
+/* -------------------------------------------------------------------------
+   Small helper: POSTs a JSON payload to a webhook URL and returns parsed
+   JSON. Falls back to a mocked response when no URL has been configured,
+   so the UI is fully clickable before any n8n workflow is wired up.
+   ------------------------------------------------------------------------- */
+async function callWebhook(url, payload, mockResponse) {
+  if (!url) {
+    console.warn('[MyLife AI] No webhook URL configured — using mock response.', { payload, mockResponse });
+    await new Promise((r) => setTimeout(r, 500)); // simulate latency
+    return mockResponse;
+  }
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    throw new Error(`Webhook request failed with status ${res.status}`);
+  }
+  return res.json();
+}
+
+/* -------------------------------------------------------------------------
+   pick(): reads the first present key from a list of possible field names.
+   n8n workflows / Google Sheets columns can come back as camelCase or
+   snake_case depending on how the workflow was built, so every renderer
+   below reads through this instead of assuming one exact key name.
+   ------------------------------------------------------------------------- */
+function pick(obj, keys, fallback = '—') {
+  if (!obj) return fallback;
+  for (const key of keys) {
+    const value = obj[key];
+    if (value !== undefined && value !== null && value !== '') return value;
+  }
+  return fallback;
+}
+
+/* -------------------------------------------------------------------------
+   showToast(): small floating success/error notification. Reuses the same
+   glass/color tokens already defined in <style>, no new layout is added
+   to the page — the toast container is created on demand and removed
+   after a few seconds.
+   ------------------------------------------------------------------------- */
+function showToast(message, type = 'success') {
+  const toast = document.createElement('div');
+  const accent = type === 'success' ? 'border-teal/40 text-teal' : 'border-coral/40 text-coral';
+  toast.className = `glass-strong fixed bottom-5 right-5 z-50 rounded-xl px-4 py-3 text-sm border ${accent} shadow-lg max-w-xs`;
+  toast.textContent = message;
+  document.body.appendChild(toast);
+  setTimeout(() => {
+    toast.style.transition = 'opacity 0.4s ease';
+    toast.style.opacity = '0';
+    setTimeout(() => toast.remove(), 400);
+  }, 3000);
+}
+
+// Tracks the milestone the user last picked in the Goals tab, so the
+// Tasks tab knows which milestone_id to send without changing any layout.
+let currentMilestone = { id: '', name: '' };
+
+/* =========================================================================
+   DASHBOARD — GET /dashboard
+   ========================================================================= */
+async function fetchDashboardData() {
+  const briefingEl = document.getElementById('dashboard-briefing');
+  const refreshBtn = document.getElementById('refresh-dashboard');
+  refreshBtn.disabled = true;
+  refreshBtn.textContent = 'Loading...';
+  briefingEl.textContent = 'Loading your briefing...';
+
+  try {
+    const data = await callWebhook(
+      WEBHOOK_URLS.dashboard,
+      { requestedAt: new Date().toISOString() },
+      {
+        lifeScore: 72,
+        activeGoals: 3,
+        tasksToday: 5,
+        journalStreak: 6,
+        briefing: 'This is a placeholder briefing. Connect the /dashboard webhook to replace this with a real AI-generated summary of goals, tasks, and mood trends.',
+      }
+    );
+
+    document.getElementById('life-score-value').textContent = data.lifeScore ?? '--';
+    document.getElementById('stat-goals').textContent = data.activeGoals ?? '--';
+    document.getElementById('stat-tasks').textContent = data.tasksToday ?? '--';
+    document.getElementById('stat-streak').textContent = data.journalStreak ?? '--';
+    briefingEl.textContent = data.briefing ?? 'No briefing available.';
+
+    // Animate the life-score ring (circumference = 2 * PI * r, r = 38)
+    const circumference = 238.76;
+    const pct = Math.max(0, Math.min(100, data.lifeScore ?? 0));
+    const offset = circumference - (pct / 100) * circumference;
+    document.getElementById('life-score-ring').style.strokeDashoffset = offset;
+
+    setWebhookStatus(true);
+  } catch (err) {
+    console.error('[MyLife AI] fetchDashboardData failed:', err);
+    briefingEl.textContent = 'Could not load the dashboard. Check the webhook URL and try again.';
+    setWebhookStatus(false);
+  } finally {
+    refreshBtn.disabled = false;
+    refreshBtn.textContent = 'Refresh';
+  }
+}
+
+/* =========================================================================
+   GOALS — POST /goal-planner
+   ========================================================================= */
+async function planGoal(goalText) {
+  const statusEl = document.getElementById('goal-status');
+  const listEl = document.getElementById('goals-list');
+  const btn = document.getElementById('plan-goal-btn');
+
+  if (!goalText.trim()) {
+    statusEl.textContent = 'Enter a goal first.';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Planning...';
+  statusEl.textContent = 'Asking the planner for milestones...';
+
+  try {
+    // n8n contract: POST { chatInput: "<goal text>" }
+    const data = await callWebhook(
+      WEBHOOK_URLS.goalPlanner,
+      { chatInput: goalText },
+      {
+        goal: {
+          name: goalText,
+          category: 'General',
+          priority: 'Medium',
+          estimatedDuration: 'Placeholder — connect /goal-planner for real output',
+          targetDate: 'TBD',
+          description: 'Placeholder description.',
+        },
+        milestones: [
+          { id: 'demo-1', name: 'Placeholder milestone 1', description: 'Placeholder milestone description.', startDate: 'TBD', endDate: 'TBD', priority: 'Medium', status: 'Not Started' },
+          { id: 'demo-2', name: 'Placeholder milestone 2', description: 'Placeholder milestone description.', startDate: 'TBD', endDate: 'TBD', priority: 'Medium', status: 'Not Started' },
+        ],
+      }
+    );
+
+    // Supports both response shapes: { goal, milestones } or { output: { goal, milestones } }
+    const payload = data.output ?? data;
+    const goal = payload.goal;
+    const milestones = payload.milestones ?? [];
+
+    if (!goal) {
+      statusEl.textContent = 'No goal returned.';
+      setWebhookStatus(false);
+      return;
+    }
+
+    // Clear the empty-state placeholder the first time a goal is added
+    if (listEl.dataset.hasGoals !== 'true') {
+      listEl.innerHTML = '';
+      listEl.dataset.hasGoals = 'true';
+    }
+
+    const goalName = pick(goal, ['name', 'goalName', 'goal_name', 'title'], goalText);
+    const category = pick(goal, ['category', 'goalCategory', 'goal_category']);
+    const priority = pick(goal, ['priority']);
+    const duration = pick(goal, ['estimatedDuration', 'estimated_duration', 'duration']);
+    const targetDate = pick(goal, ['targetDate', 'target_date', 'deadline']);
+    const description = pick(goal, ['description', 'desc']);
+
+    const milestonesHtml = milestones.length
+      ? milestones.map((m, i) => {
+          const mId = escapeHtml(String(pick(m, ['id', 'milestone_id', 'milestoneId'], `m-${i}`)));
+          const mName = escapeHtml(String(pick(m, ['name', 'title', 'milestone'], `Milestone ${i + 1}`)));
+          const mDesc = escapeHtml(String(pick(m, ['description', 'desc'])));
+          const mStart = pick(m, ['startDate', 'start_date'], '');
+          const mEnd = pick(m, ['endDate', 'end_date', 'dueDate', 'due_date', 'targetDate'], '');
+          const mDateRange = escapeHtml(String(mStart && mEnd ? `${mStart} – ${mEnd}` : (mEnd || mStart || '—')));
+          const mPriority = escapeHtml(String(pick(m, ['priority'])));
+          const mStatus = escapeHtml(String(pick(m, ['status'])));
+          return `
+            <li class="relative pl-6 pb-4 border-l border-white/10 last:border-transparent last:pb-0">
+              <span class="absolute -left-[5px] top-1 w-2.5 h-2.5 rounded-full bg-gradient-to-br from-violet to-teal"></span>
+              <p class="text-sm font-medium text-slate-200">${mName}</p>
+              <p class="text-xs text-slate-400 mt-0.5">${mDesc}</p>
+              <div class="flex flex-wrap gap-x-3 gap-y-0.5 mt-1 text-xs text-slate-500">
+                <span>📅 ${mDateRange}</span>
+                <span>⚑ ${mPriority}</span>
+                <span>📌 ${mStatus}</span>
+              </div>
+              <button
+                class="generate-tasks-for-milestone-btn mt-2 text-xs px-3 py-1.5 rounded-lg glass-input hover:bg-white/10 transition"
+                data-milestone-id="${mId}" data-milestone-name="${mName}">
+                Generate tasks for this milestone
+              </button>
+            </li>`;
+        }).join('')
+      : '<li class="text-sm text-slate-500">No milestones generated.</li>';
+
+    const card = document.createElement('div');
+    card.className = 'glass rounded-2xl p-5';
+    card.innerHTML = `
+      <h3 class="font-display font-medium mb-2">${escapeHtml(String(goalName))}</h3>
+      <div class="flex flex-wrap gap-2 mb-3">
+        <span class="text-xs px-2.5 py-1 rounded-lg glass-input text-slate-300">${escapeHtml(String(category))}</span>
+        <span class="text-xs px-2.5 py-1 rounded-lg glass-input text-slate-300">Priority: ${escapeHtml(String(priority))}</span>
+        <span class="text-xs px-2.5 py-1 rounded-lg glass-input text-slate-300">${escapeHtml(String(duration))}</span>
+        <span class="text-xs px-2.5 py-1 rounded-lg glass-input text-slate-300">Target: ${escapeHtml(String(targetDate))}</span>
+      </div>
+      <p class="text-sm text-slate-400 mb-4">${escapeHtml(String(description))}</p>
+      <ul class="mt-1">${milestonesHtml}</ul>
+    `;
+    listEl.prepend(card);
+
+    // Wire up each milestone's "Generate tasks" button
+    card.querySelectorAll('.generate-tasks-for-milestone-btn').forEach((mbtn) => {
+      mbtn.addEventListener('click', () => {
+        currentMilestone = { id: mbtn.dataset.milestoneId, name: mbtn.dataset.milestoneName };
+        showTab('tasks');
+        const statusEl2 = document.getElementById('task-status');
+        statusEl2.textContent = `Selected milestone: ${mbtn.dataset.milestoneName}`;
+        generateTasks();
+      });
+    });
+
+    document.getElementById('goal-input').value = '';
+    statusEl.textContent = 'Goal planned.';
+    setWebhookStatus(true);
+  } catch (err) {
+    console.error('[MyLife AI] planGoal failed:', err);
+    statusEl.textContent = 'Could not plan this goal. Check the webhook URL and try again.';
+    setWebhookStatus(false);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Plan it';
+  }
+}
+
+/* =========================================================================
+   TASKS — POST /task-generator
+   ========================================================================= */
+async function generateTasks() {
+  const statusEl = document.getElementById('task-status');
+  const listEl = document.getElementById('tasks-list');
+  const btn = document.getElementById('generate-tasks-btn');
+
+  // Prefer the milestone picked from the Goals tab; fall back to whatever
+  // was typed in the context box so the original free-text flow still works.
+  const milestoneId = currentMilestone.id || document.getElementById('task-context').value.trim();
+
+  if (!milestoneId) {
+    statusEl.textContent = 'Select a milestone from Goals, or enter context above, first.';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Generating...';
+  statusEl.textContent = currentMilestone.name
+    ? `Generating tasks for "${currentMilestone.name}"...`
+    : 'Generating your task list...';
+
+  try {
+    // n8n contract: POST { milestone_id: "..." }
+    const data = await callWebhook(
+      WEBHOOK_URLS.taskGenerator,
+      { milestone_id: milestoneId },
+      {
+        tasks: [
+          {
+            name: 'Placeholder task 1 — connect /task-generator for real output',
+            description: 'Placeholder task description.',
+            priority: 'Medium', estimatedMinutes: 30, dueDate: 'TBD', status: 'Not Started', xpReward: 10,
+          },
+          {
+            name: 'Placeholder task 2',
+            description: 'Placeholder task description.',
+            priority: 'High', estimatedMinutes: 45, dueDate: 'TBD', status: 'Not Started', xpReward: 15,
+          },
+        ],
+      }
+    );
+
+    // Supports both response shapes: { tasks } or { output: { tasks } }
+    const payload = data.output ?? data;
+    const tasks = payload.tasks ?? [];
+
+    if (listEl.dataset.hasTasks !== 'true') {
+      listEl.innerHTML = '';
+      listEl.dataset.hasTasks = 'true';
+    }
+
+    if (!tasks.length) {
+      const li = document.createElement('li');
+      li.className = 'glass rounded-xl p-4 text-sm text-slate-500 text-center';
+      li.textContent = 'No tasks generated.';
+      listEl.appendChild(li);
+      statusEl.textContent = 'No tasks generated.';
+      setWebhookStatus(true);
+      return;
+    }
+
+    const priorityColor = (p) => {
+      const val = String(p).toLowerCase();
+      if (val.includes('high')) return 'text-coral';
+      if (val.includes('low')) return 'text-teal';
+      return 'text-amber-300';
+    };
+
+    tasks.forEach((task) => {
+      const name = pick(task, ['name', 'title', 'task_name'], 'Untitled task');
+      const description = pick(task, ['description', 'desc']);
+      const priority = pick(task, ['priority']);
+      const minutes = pick(task, ['estimatedMinutes', 'estimated_minutes', 'minutes']);
+      const dueDate = pick(task, ['dueDate', 'due_date']);
+      const status = pick(task, ['status']);
+      const xp = pick(task, ['xpReward', 'xp_reward', 'xp']);
+
+      const li = document.createElement('li');
+      li.className = 'glass rounded-xl p-4';
+      li.innerHTML = `
+        <div class="flex items-start justify-between gap-3">
+          <p class="text-sm font-medium text-slate-200">${escapeHtml(String(name))}</p>
+          <span class="text-xs font-medium ${priorityColor(priority)} shrink-0">${escapeHtml(String(priority))}</span>
+        </div>
+        <p class="text-xs text-slate-400 mt-1">${escapeHtml(String(description))}</p>
+        <div class="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-xs text-slate-400">
+          <span>⏱ ${escapeHtml(String(minutes))} min</span>
+          <span>📅 Due ${escapeHtml(String(dueDate))}</span>
+          <span>📌 ${escapeHtml(String(status))}</span>
+          <span class="text-teal">✦ ${escapeHtml(String(xp))} XP</span>
+        </div>
+      `;
+      listEl.appendChild(li);
+    });
+
+    statusEl.textContent = 'Tasks generated.';
+    setWebhookStatus(true);
+  } catch (err) {
+    console.error('[MyLife AI] generateTasks failed:', err);
+    statusEl.textContent = 'Could not generate tasks. Check the webhook URL and try again.';
+    setWebhookStatus(false);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Generate tasks';
+  }
+}
+
+/* =========================================================================
+   JOURNAL — POST /journal
+   ========================================================================= */
+async function saveJournalEntry(entryText) {
+  const statusEl = document.getElementById('journal-status');
+  const reflectionEl = document.getElementById('journal-reflection');
+  const btn = document.getElementById('save-journal-btn');
+
+  if (!entryText.trim()) {
+    statusEl.textContent = 'Write something first.';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Saving...';
+  statusEl.textContent = 'Saving and reflecting...';
+
+  try {
+    // n8n contract: POST { chatInput: "<journal text>" }
+    const data = await callWebhook(
+      WEBHOOK_URLS.journal,
+      { chatInput: entryText },
+      {
+        journal: {
+          mood: 'Placeholder',
+          energy: 'Placeholder',
+          aiSummary: 'Placeholder summary — connect the /journal webhook to get real AI-generated insight on your entry.',
+          tomorrowFocus: 'Placeholder focus for tomorrow.',
+          journalText: entryText,
+        },
+      }
+    );
+
+    // Supports both response shapes: { journal } or { output: { journal } }
+    const payload = data.output ?? data;
+    const journal = payload.journal ?? {};
+
+    const mood = pick(journal, ['mood']);
+    const energy = pick(journal, ['energy']);
+    const summary = pick(journal, ['aiSummary', 'ai_summary', 'summary']);
+    const tomorrowFocus = pick(journal, ['tomorrowFocus', 'tomorrow_focus']);
+    const journalText = pick(journal, ['journalText', 'journal_text', 'entry'], entryText);
+
+    reflectionEl.innerHTML = `
+      <div class="flex flex-wrap gap-2 mb-3">
+        <span class="text-xs px-2.5 py-1 rounded-lg glass-input text-slate-300">Mood: ${escapeHtml(String(mood))}</span>
+        <span class="text-xs px-2.5 py-1 rounded-lg glass-input text-slate-300">Energy: ${escapeHtml(String(energy))}</span>
+      </div>
+      <p class="mb-3"><span class="font-medium text-slate-200">AI Summary:</span> ${escapeHtml(String(summary))}</p>
+      <p class="mb-3"><span class="font-medium text-slate-200">Tomorrow's focus:</span> ${escapeHtml(String(tomorrowFocus))}</p>
+      <p><span class="font-medium text-slate-200">Journal entry:</span> ${escapeHtml(String(journalText))}</p>
+    `;
+    reflectionEl.classList.remove('hidden');
+
+    document.getElementById('journal-entry').value = '';
+    statusEl.textContent = 'Entry saved.';
+    showToast('Journal entry saved.', 'success');
+    setWebhookStatus(true);
+  } catch (err) {
+    console.error('[MyLife AI] saveJournalEntry failed:', err);
+    statusEl.textContent = 'Could not save this entry. Check the webhook URL and try again.';
+    showToast('Could not save your journal entry.', 'error');
+    setWebhookStatus(false);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Save entry';
+  }
+}
+
+/* =========================================================================
+   AI COACH — POST /coach
+   ========================================================================= */
+async function sendCoachMessage(message) {
+  const messagesEl = document.getElementById('coach-messages');
+  const btn = document.getElementById('coach-send-btn');
+
+  if (!message.trim()) return;
+
+  appendCoachMessage(message, 'user');
+  document.getElementById('coach-input').value = '';
+  btn.disabled = true;
+
+  const typingBubble = appendCoachMessage('Thinking...', 'assistant', true);
+
+  try {
+    // n8n contract: POST { message: "..." }
+    const data = await callWebhook(
+      WEBHOOK_URLS.coach,
+      { message },
+      {
+        coach: {
+          overallProgress: 'Placeholder — connect the /coach webhook for real coaching output.',
+          biggestAchievement: 'Placeholder achievement.',
+          biggestBlocker: 'Placeholder blocker.',
+          topPriorities: ['Placeholder priority 1', 'Placeholder priority 2'],
+          motivation: 'Placeholder motivational note.',
+          productivityTip: 'Placeholder tip.',
+          nextAction: 'Placeholder next action.',
+        },
+      }
+    );
+
+    typingBubble.remove();
+    appendCoachMessage(formatCoachReply(data), 'assistant', false, true);
+    setWebhookStatus(true);
+  } catch (err) {
+    console.error('[MyLife AI] sendCoachMessage failed:', err);
+    typingBubble.remove();
+    appendCoachMessage('Could not reach the coach. Check the webhook URL and try again.', 'assistant');
+    setWebhookStatus(false);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+// Builds the structured coach reply (progress, achievement, blocker,
+// priorities, motivation, tip, next action) as safely-escaped HTML for
+// the assistant's chat bubble. Supports both response shapes:
+// { coach } or { output: { coach } }.
+function formatCoachReply(data) {
+  const payload = data.output ?? data;
+  const coach = payload.coach ?? {};
+
+  const overallProgress = pick(coach, ['overallProgress', 'overall_progress']);
+  const biggestAchievement = pick(coach, ['biggestAchievement', 'biggest_achievement']);
+  const biggestBlocker = pick(coach, ['biggestBlocker', 'biggest_blocker']);
+  const priorities = coach.topPriorities ?? coach.top_priorities ?? [];
+  const motivation = pick(coach, ['motivation']);
+  const tip = pick(coach, ['productivityTip', 'productivity_tip']);
+  const nextAction = pick(coach, ['nextAction', 'next_action']);
+
+  const prioritiesHtml = Array.isArray(priorities) && priorities.length
+    ? `<ul class="list-disc list-inside mt-1">${priorities.map((p) => `<li>${escapeHtml(String(p))}</li>`).join('')}</ul>`
+    : `<p class="mt-1 text-slate-400">None listed.</p>`;
+
+  return `
+    <div class="space-y-2.5">
+      <p><span class="font-medium text-white">Overall progress:</span> ${escapeHtml(String(overallProgress))}</p>
+      <p><span class="font-medium text-white">Biggest achievement:</span> ${escapeHtml(String(biggestAchievement))}</p>
+      <p><span class="font-medium text-white">Biggest blocker:</span> ${escapeHtml(String(biggestBlocker))}</p>
+      <div><span class="font-medium text-white">Top priorities:</span>${prioritiesHtml}</div>
+      <p><span class="font-medium text-white">Motivation:</span> ${escapeHtml(String(motivation))}</p>
+      <p><span class="font-medium text-white">Productivity tip:</span> ${escapeHtml(String(tip))}</p>
+      <p><span class="font-medium text-white">Next action:</span> ${escapeHtml(String(nextAction))}</p>
+    </div>
+  `;
+}
+
+function appendCoachMessage(content, role, isTemporary = false, isHtml = false) {
+  const messagesEl = document.getElementById('coach-messages');
+  const bubble = document.createElement('div');
+  const isUser = role === 'user';
+  bubble.className = `glass-strong rounded-2xl px-4 py-3 text-sm max-w-[80%] ${
+    isUser ? 'ml-auto rounded-tr-sm bg-violet/20' : 'rounded-tl-sm'
+  } ${isTemporary ? 'opacity-60 italic' : ''}`;
+  if (isHtml) {
+    bubble.innerHTML = content;
+  } else {
+    bubble.textContent = content;
+  }
+  messagesEl.appendChild(bubble);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+  return bubble;
+}
+
+/* =========================================================================
+   UI PLUMBING — tab switching, status pill, escaping, event wiring
+   ========================================================================= */
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function setWebhookStatus(connected) {
+  const el = document.getElementById('webhook-status');
+  const anyConfigured = Object.values(WEBHOOK_URLS).some((u) => u);
+  if (!anyConfigured) {
+    el.innerHTML = '<span class="w-2 h-2 rounded-full bg-amber-400"></span> Webhooks not configured';
+  } else if (connected) {
+    el.innerHTML = '<span class="w-2 h-2 rounded-full bg-teal"></span> Connected';
+  } else {
+    el.innerHTML = '<span class="w-2 h-2 rounded-full bg-coral"></span> Webhook error';
+  }
+}
+
+function showTab(tabName) {
+  document.querySelectorAll('.tab-panel').forEach((panel) => panel.classList.remove('active'));
+  document.getElementById(`tab-${tabName}`).classList.add('active');
+
+  document.querySelectorAll('#sidebar-nav .nav-item').forEach((btn) => {
+    btn.classList.toggle('active', btn.dataset.tab === tabName);
+  });
+  document.getElementById('mobile-nav').value = tabName;
+
+  // Lazy-load dashboard data the first time it's viewed
+  if (tabName === 'dashboard' && !dashboardLoaded) {
+    dashboardLoaded = true;
+    fetchDashboardData();
+  }
+}
+
+let dashboardLoaded = false;
+
+document.addEventListener('DOMContentLoaded', () => {
+  // Sidebar + mobile nav wiring
+  document.querySelectorAll('#sidebar-nav .nav-item').forEach((btn) => {
+    btn.addEventListener('click', () => showTab(btn.dataset.tab));
+  });
+  document.getElementById('mobile-nav').addEventListener('change', (e) => showTab(e.target.value));
+
+  // Dashboard
+  document.getElementById('refresh-dashboard').addEventListener('click', fetchDashboardData);
+
+  // Goals
+  document.getElementById('plan-goal-btn').addEventListener('click', () => {
+    planGoal(document.getElementById('goal-input').value);
+  });
+  document.getElementById('goal-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') planGoal(e.target.value);
+  });
+
+  // Tasks
+  document.getElementById('generate-tasks-btn').addEventListener('click', () => {
+    generateTasks();
+  });
+
+  // Journal
+  document.getElementById('save-journal-btn').addEventListener('click', () => {
+    saveJournalEntry(document.getElementById('journal-entry').value);
+  });
+
+  // Coach
+  document.getElementById('coach-send-btn').addEventListener('click', () => {
+    sendCoachMessage(document.getElementById('coach-input').value);
+  });
+  document.getElementById('coach-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') sendCoachMessage(e.target.value);
+  });
+
+  // Initial state
+  setWebhookStatus(false);
+  fetchDashboardData();
+  dashboardLoaded = true;
+});
+</script>
+
+</body>
+</html>
