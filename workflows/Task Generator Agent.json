@@ -1,0 +1,409 @@
+{
+  "name": "02 - Task Generator Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1QZ9Gq3IzacRkYjfoVbb0mYMTolVZleINpKtfqg31Nl4",
+          "mode": "list",
+          "cachedResultName": "MyLife_AI_Database",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1QZ9Gq3IzacRkYjfoVbb0mYMTolVZleINpKtfqg31Nl4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1482108085,
+          "mode": "list",
+          "cachedResultName": "Milestones",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1QZ9Gq3IzacRkYjfoVbb0mYMTolVZleINpKtfqg31Nl4/edit#gid=1482108085"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "status",
+              "lookupValue": "Not Started"
+            }
+          ]
+        },
+        "options": {
+          "returnFirstMatch": true
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        208,
+        0
+      ],
+      "id": "95dad3d3-a99a-4e12-ad87-c491e5f67507",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "W0LRtji0xGhbHDNL",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are the Task Generator Agent for MyLife AI.\n\nYour job is to convert ONE milestone into small actionable tasks.\n\nYou are an expert Project Planner and Productivity Coach.\n\nYou receive ONE milestone as input.\n\n------------------------------------\n\nCURRENT TIMESTAMP\n\n{{ $now }}\n\n------------------------------------\n\nMILESTONE DATA\n\n{{ JSON.stringify($data, null, 2) }}\n\n------------------------------------\n\nRules\n\n1. Understand the milestone.\n\n2. Generate between 5 and 8 tasks.\n\n3. Never generate fewer than 5 tasks.\n\n4. Never return one large task.\n\n5. Break complex work into smaller actionable tasks.\n\n6. Every task should require approximately 30–180 minutes.\n\n7. Tasks must be ordered logically.\n\n8. Use the milestone priority.\n\n9. Every due_date must fall between the milestone start_date and end_date.\n\n10. Keep task names short.\n\n11. Keep descriptions concise.\n\n12. Return ONLY valid JSON.\n\n13. Do not explain anything.\n\n14. Do not use Markdown.\n\n------------------------------------\n\nReturn EXACTLY this JSON structure.\n\n{\n  \"tasks\": [\n    {\n      \"task_id\": \"\",\n      \"goal_id\": \"\",\n      \"milestone_id\": \"\",\n      \"task_name\": \"\",\n      \"description\": \"\",\n      \"priority\": \"\",\n      \"estimated_minutes\": 60,\n      \"due_date\": \"\",\n      \"status\": \"Not Started\",\n      \"progress\": 0,\n      \"xp_reward\": 20,\n      \"created_at\": \"\",\n      \"updated_at\": \"\"\n    }\n  ]\n}",
+        "hasOutputParser": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        416,
+        0
+      ],
+      "id": "0c1e3965-656f-4133-96fc-1d094b07520b",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"additionalProperties\": false,\n  \"properties\": {\n    \"tasks\": {\n      \"type\": \"array\",\n      \"minItems\": 5,\n      \"maxItems\": 8,\n      \"items\": {\n        \"type\": \"object\",\n        \"additionalProperties\": false,\n        \"properties\": {\n          \"task_id\": {\n            \"type\": \"string\"\n          },\n          \"goal_id\": {\n            \"type\": \"string\"\n          },\n          \"milestone_id\": {\n            \"type\": \"string\"\n          },\n          \"task_name\": {\n            \"type\": \"string\"\n          },\n          \"description\": {\n            \"type\": \"string\"\n          },\n          \"priority\": {\n            \"type\": \"string\"\n          },\n          \"estimated_minutes\": {\n            \"type\": \"number\"\n          },\n          \"due_date\": {\n            \"type\": \"string\"\n          },\n          \"status\": {\n            \"type\": \"string\"\n          },\n          \"progress\": {\n            \"type\": \"number\"\n          },\n          \"xp_reward\": {\n            \"type\": \"number\"\n          },\n          \"created_at\": {\n            \"type\": \"string\"\n          },\n          \"updated_at\": {\n            \"type\": \"string\"\n          }\n        },\n        \"required\": [\n          \"task_id\",\n          \"goal_id\",\n          \"milestone_id\",\n          \"task_name\",\n          \"description\",\n          \"priority\",\n          \"estimated_minutes\",\n          \"due_date\",\n          \"status\",\n          \"progress\",\n          \"xp_reward\",\n          \"created_at\",\n          \"updated_at\"\n        ]\n      }\n    }\n  },\n  \"required\": [\n    \"tasks\"\n  ]\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        576,
+        160
+      ],
+      "id": "b94b9477-9f7d-4cbb-933d-f810501a3d19",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4.1-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4.1-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        400,
+        160
+      ],
+      "id": "f9f5c21c-02b9-41d0-89b6-2a3e29cd0889",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "EFIVRRQRMYSjFP6K",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "output.tasks",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        768,
+        0
+      ],
+      "id": "9fd07d93-1780-4e85-a93d-af5244073957",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1QZ9Gq3IzacRkYjfoVbb0mYMTolVZleINpKtfqg31Nl4",
+          "mode": "list",
+          "cachedResultName": "MyLife_AI_Database",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1QZ9Gq3IzacRkYjfoVbb0mYMTolVZleINpKtfqg31Nl4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 154195189,
+          "mode": "list",
+          "cachedResultName": "Tasks",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1QZ9Gq3IzacRkYjfoVbb0mYMTolVZleINpKtfqg31Nl4/edit#gid=154195189"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "task_id": "={{ $json.task_id }}",
+            "goal_id": "={{ $json.goal_id }}",
+            "milestone_id": "={{ $json.milestone_id }}",
+            "task_name": "={{ $json.task_name }}",
+            "description": "={{ $json.description }}",
+            "priority": "={{ $json.priority }}",
+            "estimated_minutes": "={{ $json.estimated_minutes }}",
+            "due_date": "={{ $json.due_date }}",
+            "status": "={{ $json.status }}",
+            "progress": "={{ $json.progress }}",
+            "xp_reward": "={{ $json.xp_reward }}",
+            "created_at": "={{ $json.created_at }}",
+            "updated_at": "={{ $json.updated_at }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "task_id",
+              "displayName": "task_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "goal_id",
+              "displayName": "goal_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "milestone_id",
+              "displayName": "milestone_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "task_name",
+              "displayName": "task_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "description",
+              "displayName": "description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "priority",
+              "displayName": "priority",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "estimated_minutes",
+              "displayName": "estimated_minutes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "due_date",
+              "displayName": "due_date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "progress",
+              "displayName": "progress",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "xp_reward",
+              "displayName": "xp_reward",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "updated_at",
+              "displayName": "updated_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        976,
+        0
+      ],
+      "id": "9a988ab6-327f-4fbc-b5d0-1b9c0b84e552",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "W0LRtji0xGhbHDNL",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "task-generator",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "cb7b036b-b17b-46e1-85d2-d0d387cca117",
+      "name": "Webhook",
+      "webhookId": "42a2bff6-7ff1-49f3-88f6-f15cb4001ab4"
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1184,
+        0
+      ],
+      "id": "ca3903d2-3d2d-40bd-be9a-0b0b6431eb3b",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "81ed4a22-d6d3-41e9-bcf7-7d055317dfc9",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b839f64cdbdd6eaf1d06f626410a9069d104782102db5b5abcde1f27509f2a86"
+  },
+  "nodeGroups": [],
+  "id": "CsJseYZpQrLciX1r",
+  "tags": []
+}
